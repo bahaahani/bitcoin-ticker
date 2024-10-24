@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:bitcoin_ticker/coin_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,28 +8,33 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
+  String selectedCurrency = 'USD';
+  late CoinData coinData;
+  Map<String, double?> cryptoPrices = {};
 
-  List<DropdownMenuItem> getDropDownItems(){
-    List<DropdownMenuItem<String>> dropDown = [];
+  @override
+  void initState() {
+    super.initState();
+    coinData = CoinData();
+    getData();
+  }
 
-    for(String item in currenciesList) {
-      var newItem = DropdownMenuItem(child: Text(item),
-        value: item,);
-      dropDown.add(newItem);
+  void getData() async {
+    try {
+      cryptoPrices = await coinData.getCoinData(selectedCurrency);
+      setState(() {});
+    } catch (e) {
+      print('Error: $e');
     }
-    return dropDown;
-    }
+  }
 
-    List<Widget> getPickerItems(){
+  List<Widget> getPickerItems() {
     List<Text> picks = [];
-    for(String pick in currenciesList){
-      var newItem = Text(pick);
-      picks.add(newItem);
+    for (String currency in currenciesList) {
+      picks.add(Text(currency));
     }
     return picks;
-    }
-
-  String? selectedCurrency = 'USD';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,47 +46,47 @@ class _PriceScreenState extends State<PriceScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = ? USD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
+          ...cryptoList.map((crypto) => Padding(
+                padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
+                child: Card(
+                  color: Colors.lightBlueAccent,
+                  elevation: 5.0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                        vertical: 15.0, horizontal: 28.0),
+                    child: Text(
+                      '1 $crypto = ${cryptoPrices[crypto] != null ? cryptoPrices[crypto]!.toStringAsFixed(0) : '?'} $selectedCurrency',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
+              )),
           Container(
             height: 150.0,
             alignment: Alignment.center,
             padding: EdgeInsets.only(bottom: 30.0),
             color: Colors.lightBlue,
-            child: CupertinoPicker(backgroundColor: Colors.blue,
-                itemExtent: 32, onSelectedItemChanged: (selectedIndex){
-              print(selectedIndex);
-            }, children: getPickerItems())
-
-          )],
+            child: CupertinoPicker(
+              backgroundColor: Colors.blue,
+              itemExtent: 32,
+              onSelectedItemChanged: (selectedIndex) {
+                setState(() {
+                  selectedCurrency = currenciesList[selectedIndex];
+                  getData();
+                });
+              },
+              children: getPickerItems(),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-// DropdownButton(
-// value: selectedCurrency,
-// items: getDropDownItems(), onChanged: (value){
-// setState(() {
-// selectedCurrency = value;
-// });
-// },
-// ),
